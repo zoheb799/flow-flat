@@ -3,28 +3,29 @@ import { z } from "zod";
 import { getDb, schema } from "@/lib/db";
 import { consumeRateLimit, getClientAddress } from "@/lib/security/rate-limit";
 import { isDemoOtpAvailable, verifyDemoOtp } from "@/lib/auth/phone";
-import { normalizePhone } from "@/lib/validation/phone";
+import { normalizePhoneParts } from "@/lib/validation/phone";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  phone: z.string().min(8).max(20),
+  countryCode: z.string().min(2).max(4),
+  mobileNumber: z.string().regex(/^\d{10}$/),
   otp: z.string().regex(/^\d{6}$/),
 });
 
 export async function POST(request: Request) {
-  // if (!isDemoOtpAvailable()) {
-  //   return Response.json({ error: "Demo OTP login is only available in development. Configure an SMS provider for production." }, { status: 503 });
-  // }
+  if (!isDemoOtpAvailable()) {
+    return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
+  }
   const allowed = await consumeRateLimit("register", getClientAddress(request.headers), 5, 60 * 60 * 1000);
   if (!allowed) return Response.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
   const input = registerSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) {
-    return Response.json({ error: "Enter your name, a valid phone number, and the six-digit OTP." }, { status: 400 });
+    return Response.json({ error: "Enter your name, country code, 10-digit mobile number, and six-digit OTP." }, { status: 400 });
   }
 
-  const phone = normalizePhone(input.data.phone);
+  const phone = normalizePhoneParts(input.data.countryCode, input.data.mobileNumber);
   if (!phone || !await verifyDemoOtp(phone, input.data.otp)) {
-    return Response.json({ error: "The phone number or OTP is invalid." }, { status: 400 });
+    return Response.json({ error: "The country code, mobile number, or OTP is invalid." }, { status: 400 });
   }
 
   const db = getDb();

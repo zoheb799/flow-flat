@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Activity, Bell, Home, ShieldCheck, Users, WalletCards } from "lucide-react";
 
-type SessionResponse = { user?: { id?: string } };
+type SessionResponse = { user?: { id?: string } } | null;
 type Household = { role: "ADMIN" | "MEMBER" };
 
 export function AuthenticatedBottomNav() {
@@ -20,7 +20,7 @@ export function AuthenticatedBottomNav() {
         const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" });
         if (!sessionResponse.ok) throw new Error("Unable to check sign-in status.");
         const session: SessionResponse = await sessionResponse.json();
-        if (!session.user?.id) {
+        if (!session?.user?.id) {
           if (active) {
             setVisible(false);
             setHasAdminGroup(false);

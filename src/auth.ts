@@ -34,7 +34,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           15 * 60 * 1000,
         );
         if (!allowed) return null;
-        if (!await verifyDemoOtp(phone, parsed.data.otp, true)) return null;
         const [user] = await getDb()
           .select({
             id: schema.users.id,
@@ -47,6 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1);
 
         if (!user || !user.phone) return null;
+        if (!await verifyDemoOtp(phone, parsed.data.otp, true)) return null;
 
         return { id: user.id, name: user.name, phone: user.phone, authVersion: user.authVersion };
       },
