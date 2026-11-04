@@ -1,0 +1,22 @@
+{
+  "name": "FlatFlow — Shared household expenses",
+  "short_name": "FlatFlow",
+  "description": "A clear, private way to manage flat wallets and shared expenses.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f6",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "/flatflow-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/flatflow-icon.svg", "sizes": "any" }] },
+    { "name": "Record a meal", "url": "/meals/new", "icons": [{ "src": "/flatflow-icon.svg", "sizes": "any" }] }
+  ]
+}
