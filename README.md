@@ -78,6 +78,7 @@ See [.env.example](./.env.example). Important values:
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL/Neon connection string; server-only |
+| `MIGRATION_DATABASE_URL` | Optional direct PostgreSQL connection for migrations; falls back to `DATABASE_URL` |
 | `AUTH_SECRET` | Auth.js session signing/encryption secret |
 | `DEMO_OTP` | Six-digit fixed OTP for local development only; never use fixed OTP authentication in production |
 | `APP_URL` | Public origin used to construct password-reset links |
@@ -125,11 +126,15 @@ npm run start
 
 ## Deployment
 
-1. Create a Neon PostgreSQL database and configure its TLS connection URL in Vercel.
-2. Set all required secrets and service settings in Vercel's environment variables.
-3. Apply migrations with `npm run db:migrate` as a deployment step before serving traffic.
-4. Deploy the Next.js app to Vercel and verify the canonical `APP_URL`, SMTP delivery, and push subscription flow over HTTPS.
-5. Keep database and service credentials out of client bundles and source control.
+Vercel uses `npm run build:vercel` as its build command. This runs `npm run db:migrate` first and only starts the Next.js production build if migrations succeed. A migration failure therefore fails the Vercel deployment instead of publishing an app against an out-of-date schema.
+
+1. Create a Neon PostgreSQL database.
+2. In Vercel Project Settings → Environment Variables, configure `DATABASE_URL` for the application (the Neon pooled connection string is suitable).
+3. Configure `MIGRATION_DATABASE_URL` with Neon’s direct, non-pooled connection string for Drizzle migrations. If omitted, migrations use `DATABASE_URL`.
+4. Configure `AUTH_SECRET` and `APP_URL`; add optional SMTP and VAPID settings only when those services are configured. Do not add a production `DEMO_OTP`; the current fixed-OTP flow is development-only, so production authentication requires a real SMS integration.
+5. Import the Git repository into Vercel and deploy. Each deployment runs migrations before building. Keep database and service credentials out of source control.
+
+Use backward-compatible, append-only migrations for zero-downtime deployments: expand the schema first, deploy code compatible with both schemas, then remove obsolete schema in a later deployment.
 
 ## Scope notes
 
