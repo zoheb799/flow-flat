@@ -141,7 +141,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             {!otpSent && mode === "register" && (
               <label className="block text-sm font-medium text-slate-700">
                 Your name
-                <input name="name" autoComplete="name" required minLength={2} maxLength={80} value={name} onChange={(event) => setName(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3.5 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10" placeholder="e.g. Aanya Sharma" />
+                <input name="name" autoComplete="name" required minLength={2} maxLength={80} value={name} onChange={(event) => setName(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3.5 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10" placeholder="e.g. zohaib uddin" />
               </label>
             )}
             {!otpSent ? (
