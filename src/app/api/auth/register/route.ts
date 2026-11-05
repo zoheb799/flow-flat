@@ -13,9 +13,9 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!isDemoOtpAvailable()) {
-    return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
-  }
+  // if (!isDemoOtpAvailable()) {
+  //   return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
+  // }
   const allowed = await consumeRateLimit("register", getClientAddress(request.headers), 5, 60 * 60 * 1000);
   if (!allowed) return Response.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
   const input = registerSchema.safeParse(await request.json().catch(() => null));

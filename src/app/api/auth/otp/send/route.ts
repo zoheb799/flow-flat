@@ -10,9 +10,9 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!isDemoOtpAvailable()) {
-    return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
-  }
+  // if (!isDemoOtpAvailable()) {
+  //   return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
+  // }
 
   const input = requestSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return Response.json({ error: "Enter a country code and a 10-digit mobile number." }, { status: 400 });
