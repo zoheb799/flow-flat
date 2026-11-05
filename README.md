@@ -4,7 +4,7 @@ FlatFlow is a multi-tenant household expense PWA built with Next.js App Router, 
 
 ## What is implemented
 
-- Phone-number registration and login with a fixed development-only OTP, secure HTTP-only Auth.js sessions, and logout.
+- Phone-number registration and login with an environment-controlled fixed OTP, secure HTTP-only Auth.js sessions, and logout.
 - Household creation, immediate phone-based addition of registered members, membership checks, admin/member roles, and household-scoped APIs.
 - Multiple groups per account, separated into groups created and joined, with member rosters visible to group members and creator-only group editing/member management.
 - PostgreSQL schema and migrations with UUID keys, composite household foreign keys, unique idempotency constraints, and indexes.
@@ -80,7 +80,8 @@ See [.env.example](./.env.example). Important values:
 | `DATABASE_URL` | PostgreSQL/Neon connection string; server-only |
 | `MIGRATION_DATABASE_URL` | Optional direct PostgreSQL connection for migrations; falls back to `DATABASE_URL` |
 | `AUTH_SECRET` | Auth.js session signing/encryption secret |
-| `DEMO_OTP` | Six-digit fixed OTP for local development only; never use fixed OTP authentication in production |
+| `STATIC_OTP_ENABLED` | Set to `true` to enable the configured fixed OTP; set to `false` until an SMS provider is configured |
+| `DEMO_OTP` | Six-digit fixed OTP used when `STATIC_OTP_ENABLED=true`; fixed OTPs are not secure for production |
 | `APP_URL` | Public origin used to construct password-reset links |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | SMTP transport for password recovery |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Server-side Web Push credentials |
@@ -101,7 +102,7 @@ Migrations are append-only. Do not edit an already-applied migration in a deploy
 
 ## Authentication and invitations
 
-Auth.js Credentials uses phone numbers and JWT sessions. Local development uses a fixed six-digit `DEMO_OTP` that is stored hashed for each requested phone number, expires after 60 seconds, and is consumed on successful sign-in. This flow is rejected in production and does not send SMS. A real SMS provider and per-request OTP verification must be integrated before production phone login. Indian 10-digit phone numbers are stored in normalized `+91` format; international numbers must include their country code.
+Auth.js Credentials uses phone numbers and JWT sessions. When `STATIC_OTP_ENABLED=true` and `DEMO_OTP` is a six-digit value, that fixed OTP is stored hashed for each requested phone number, expires after 60 seconds, and is consumed on successful sign-in. This switch works independently of `NODE_ENV`, so enabling it on a production server also enables the fixed OTP there; do so only for controlled testing. When it is disabled, OTP sending and registration return `503` until an SMS delivery provider is integrated. Indian 10-digit phone numbers are stored in normalized `+91` format; international numbers must include their country code.
 
 The user who creates a household is its `ADMIN`. Admins can add a housemate by name and phone; if the phone is new, a passwordless account, membership, and wallet are created atomically. If the account already exists, it is added without overwriting its profile. The housemate can then sign in with their phone and the development OTP and land on the dashboard. Admin-only endpoints guard household pricing and ration expense changes. Existing account rows retain their email and password fields for compatibility, but users created before phone login need a unique phone number added before they can sign in. Password reset by email remains for those legacy accounts only.
 

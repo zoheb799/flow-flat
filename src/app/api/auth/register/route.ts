@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/lib/db";
 import { consumeRateLimit, getClientAddress } from "@/lib/security/rate-limit";
-import { isDemoOtpAvailable, verifyDemoOtp } from "@/lib/auth/phone";
+import { isStaticOtpEnabled, verifyOtp } from "@/lib/auth/phone";
 import { normalizePhoneParts } from "@/lib/validation/phone";
 
 const registerSchema = z.object({
@@ -13,9 +13,12 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  // if (!isDemoOtpAvailable()) {
-  //   return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
-  // }
+  if (!isStaticOtpEnabled()) {
+    return Response.json(
+      { error: "OTP delivery is not configured. Enable static OTP or configure an SMS provider." },
+      { status: 503 },
+    );
+  }
   const allowed = await consumeRateLimit("register", getClientAddress(request.headers), 5, 60 * 60 * 1000);
   if (!allowed) return Response.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
   const input = registerSchema.safeParse(await request.json().catch(() => null));
@@ -24,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   const phone = normalizePhoneParts(input.data.countryCode, input.data.mobileNumber);
-  if (!phone || !await verifyDemoOtp(phone, input.data.otp)) {
+  if (!phone || !await verifyOtp(phone, input.data.otp)) {
     return Response.json({ error: "The country code, mobile number, or OTP is invalid." }, { status: 400 });
   }
 

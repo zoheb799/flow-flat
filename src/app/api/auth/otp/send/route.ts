@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hashDemoOtp, isDemoOtpAvailable } from "@/lib/auth/phone";
+import { hashOtp, isStaticOtpEnabled } from "@/lib/auth/phone";
 import { normalizePhoneParts } from "@/lib/validation/phone";
 import { consumeRateLimit, getClientAddress } from "@/lib/security/rate-limit";
 import { getDb, schema } from "@/lib/db";
@@ -10,9 +10,12 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  // if (!isDemoOtpAvailable()) {
-  //   return Response.json({ error: "Demo OTP is available only in development. Production phone login requires SMS OTP delivery." }, { status: 503 });
-  // }
+  if (!isStaticOtpEnabled()) {
+    return Response.json(
+      { error: "OTP delivery is not configured. Enable static OTP or configure an SMS provider." },
+      { status: 503 },
+    );
+  }
 
   const input = requestSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return Response.json({ error: "Enter a country code and a 10-digit mobile number." }, { status: 400 });
@@ -28,13 +31,13 @@ export async function POST(request: Request) {
   const now = new Date();
   await getDb().insert(schema.phoneOtps).values({
     phone,
-    otpHash: hashDemoOtp(process.env.DEMO_OTP ?? ""),
+    otpHash: hashOtp(process.env.DEMO_OTP ?? ""),
     expiresAt: new Date(now.getTime() + 60_000),
     createdAt: now,
   }).onConflictDoUpdate({
     target: schema.phoneOtps.phone,
     set: {
-      otpHash: hashDemoOtp(process.env.DEMO_OTP ?? ""),
+      otpHash: hashOtp(process.env.DEMO_OTP ?? ""),
       expiresAt: new Date(now.getTime() + 60_000),
       createdAt: now,
     },

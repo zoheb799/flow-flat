@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { consumeRateLimit, getClientAddress } from "@/lib/security/rate-limit";
 import { getDb, schema } from "@/lib/db";
-import { isDemoOtpAvailable, verifyDemoOtp } from "@/lib/auth/phone";
+import { isStaticOtpEnabled, verifyOtp } from "@/lib/auth/phone";
 import { normalizePhone } from "@/lib/validation/phone";
 
 const credentialsSchema = z.object({
@@ -26,7 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const phone = normalizePhone(parsed.data.phone);
-        if (!phone || !isDemoOtpAvailable()) return null;
+        if (!phone || !isStaticOtpEnabled()) return null;
         const allowed = await consumeRateLimit(
           "login",
           `${getClientAddress(request.headers)}:${phone}`,
@@ -46,7 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1);
 
         if (!user || !user.phone) return null;
-        if (!await verifyDemoOtp(phone, parsed.data.otp, true)) return null;
+        if (!await verifyOtp(phone, parsed.data.otp, true)) return null;
 
         return { id: user.id, name: user.name, phone: user.phone, authVersion: user.authVersion };
       },
